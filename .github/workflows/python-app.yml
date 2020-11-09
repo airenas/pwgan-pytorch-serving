@@ -17,13 +17,16 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
+      - name: Install sndfile
+          run: |
+            sudo apt-get update
+            sudo apt-get install -y libsndfile1
       - name: Set up Python
         uses: actions/setup-python@v2
         with:
           python-version: 3.8
       - name: Install dependencies
         run: |
-          apt-get update && apt-get install -y libsndfile1
           python -m pip install --upgrade pip
           pip install flake8
           pip install --no-cache-dir torch==1.7.0+cpu -f https://download.pytorch.org/whl/torch_stable.html
