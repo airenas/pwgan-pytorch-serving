@@ -18,9 +18,9 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v2
       - name: Install sndfile
-          run: |
-            sudo apt-get update
-            sudo apt-get install -y libsndfile1
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libsndfile1
       - name: Set up Python
         uses: actions/setup-python@v2
         with:
