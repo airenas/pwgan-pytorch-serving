@@ -9,4 +9,4 @@ stop:
 clean: stop
 #####################################################################################
 test:
-	curl -i -X POST http://localhost:8000/model -d@data.json
+	curl -i -X POST http://localhost:$(SERVICE_PORT)/model -d@data.json
