@@ -8,6 +8,7 @@ services:
     environment:
       MODEL_NAME: ${MODEL_NAME}
       MODEL_PATH: "/model"
+      DEVICE: ${DEVICE}
     # restart: unless-stopped
     volumes:
       - ${MODEL_PATH}:/model

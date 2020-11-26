@@ -30,11 +30,12 @@ def setup_vars(app):
     logger.info("Loading model")
     app.model_name = os.environ.get("MODEL_NAME", "checkpoint-700000steps.pkl")
     app.model_path = os.environ.get("MODEL_PATH", "/model")
+    app.device = os.environ.get("DEVICE", "cpu")
     app.model_loaded = False
 
 
 def setup_model(app):
-    pwgan_model = PWGANModel(app.model_path, app.model_name)
+    pwgan_model = PWGANModel(app.model_path, app.model_name, app.device)
 
     def calc(data, model):
         return pwgan_model.calculate(data)
