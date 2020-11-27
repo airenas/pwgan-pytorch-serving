@@ -9,7 +9,6 @@ requests==2.24.0
 starlette==0.13.6
 urllib3==1.25.11
 uvicorn==0.12.2
-torch==1.7.0+cpu
 parallel-wavegan==0.4.8
 
 PyYAML~=5.3.1
