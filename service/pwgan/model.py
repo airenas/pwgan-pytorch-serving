@@ -39,7 +39,7 @@ class PWGANModel:
         with torch.no_grad():
             start = time.time()
 
-            x = torch.load(io.BytesIO(spectrogram_bytes))
+            x = torch.load(io.BytesIO(spectrogram_bytes),  map_location=self.device)
             y = self.vocoder.inference(x)
 
             voc_end = time.time()
