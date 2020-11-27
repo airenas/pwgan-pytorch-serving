@@ -1,0 +1,16 @@
+version: '3.7'
+
+services:
+  pwgan-serving:
+    image: airenas/pwgan-pytorch-serving-gpu:${SERVICE_VERSION}
+    ports:
+      - "${SERVICE_PORT}:8000"
+    environment:
+      MODEL_NAME: ${MODEL_NAME}
+      MODEL_PATH: "/model"
+      DEVICE: cuda
+      NVIDIA_VISIBLE_DEVICES: all
+    # restart: unless-stopped
+    volumes:
+      - ${MODEL_PATH}:/model
+    runtime: nvidia
