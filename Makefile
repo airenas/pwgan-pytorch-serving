@@ -1,5 +1,7 @@
 -include Makefile.options
 MODEL_PATH?=./model
+cuda?=0
+torch?=1.7.0
 #####################################################################################
 service=airenas/pwgan-pytorch-serving
 version=0.2
@@ -15,7 +17,7 @@ drop-env:
 	conda remove --name pwgan-$(DEVICE) --all
 install-req:
 ifeq ($(DEVICE),cpu)
-	pip install torch==1.7.0+cpu -f https://download.pytorch.org/whl/torch_stable.html
+	pip install torch==$(torch)+cpu -f https://download.pytorch.org/whl/torch_stable.html
 	pip install -r requirements.txt
 else
 	pip install -r requirements.txt
@@ -23,7 +25,8 @@ else
 endif
 
 run:
-	MODEL_PATH=$(MODEL_PATH) MODEL_NAME=$(MODEL_NAME) DEVICE=$(DEVICE) PORT=$(PORT) python run.py
+	CUDA_VISIBLE_DEVICES=$(cuda) MODEL_PATH=$(MODEL_PATH) MODEL_NAME=$(MODEL_NAME) \
+		DEVICE=$(DEVICE) PORT=$(PORT) python run.py
 ########### DOCKER ##################################################################
 tag=$(service):$(version).$(commit_count)
 dbuild: $(dist_dir)/$(executable_name)
