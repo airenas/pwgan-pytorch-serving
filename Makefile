@@ -27,6 +27,22 @@ endif
 run:
 	CUDA_VISIBLE_DEVICES=$(cuda) MODEL_PATH=$(MODEL_PATH) MODEL_NAME=$(MODEL_NAME) \
 		DEVICE=$(DEVICE) PORT=$(PORT) python run.py
+########### SERVICE ################################################################
+logs:
+	mkdir -p $@
+install-service: deploy/service/pwgan.service | logs
+	cp deploy/service/pwgan.service /etc/systemd/system/
+	systemctl enable pwgan.service
+uninstall-service:
+	systemctl disable pwgan.service
+	rm -f /etc/systemd/system/pwgan.service
+deploy/service/pwgan.service: deploy/service/pwgan.service.in
+	cat $< | envsubst > $@
+run-service:
+	. ~/miniconda3/etc/profile.d/conda.sh; conda activate pwgan-$(DEVICE); \
+		CUDA_VISIBLE_DEVICES=$(cuda) MODEL_PATH=$(MODEL_PATH) MODEL_NAME=$(MODEL_NAME) \
+		DEVICE=$(DEVICE) PORT=$(PORT) python run.py
+########### DOCKER ##################################################################
 ########### DOCKER ##################################################################
 tag=$(service):$(version).$(commit_count)
 dbuild: $(dist_dir)/$(executable_name)
