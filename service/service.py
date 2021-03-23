@@ -11,13 +11,20 @@ from service.pwgan.model import PWGANModel
 def create_service():
     app = FastAPI(
         title="PWGAN Pytorch serving",
-        version="0.1",
+        version="0.2",
     )
+    setup_prometheus(app)
     setup_requests(app)
     setup_routes(app)
     setup_vars(app)
     setup_model(app)
     return app
+
+
+def setup_prometheus(app):
+    from starlette_exporter import PrometheusMiddleware, handle_metrics
+    app.add_middleware(PrometheusMiddleware, app_name="pwgan-pytorch-serving", group_paths=True, prefix="model")
+    app.add_route("/metrics", handle_metrics)
 
 
 def setup_routes(app):
