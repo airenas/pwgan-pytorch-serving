@@ -2,6 +2,7 @@ import os
 
 import requests
 import urllib3
+from service.metrics import MetricsKeeper
 from fastapi import FastAPI
 from fastapi.logger import logger
 
@@ -24,6 +25,7 @@ def create_service():
 def setup_prometheus(app):
     from starlette_exporter import PrometheusMiddleware, handle_metrics
     app.add_middleware(PrometheusMiddleware, app_name="pwgan-pytorch-serving", group_paths=True, prefix="model")
+    app.metrics = MetricsKeeper()
     app.add_route("/metrics", handle_metrics)
 
 
@@ -42,10 +44,12 @@ def setup_vars(app):
 
 
 def setup_model(app):
-    pwgan_model = PWGANModel(app.model_path, app.model_name, app.device)
+    with app.metrics.load_metric.time():
+        pwgan_model = PWGANModel(app.model_path, app.model_name, app.device)
 
     def calc(data, model):
-        return pwgan_model.calculate(data)
+        with app.metrics.calc_metric.time():
+            return pwgan_model.calculate(data)
 
     app.calculate = calc
     app.model_loaded = True
