@@ -1,20 +1,27 @@
+import logging
 import os
 import sys
 
 import uvicorn
-from service.service import create_service
+from fastapi.logger import logger
 from uvicorn.config import LOGGING_CONFIG
 
-from fastapi.logger import logger
-import logging
+from service.service import create_service
+
+
+def prepare_logger(_logger, _ll):
+    _handler = logging.StreamHandler(sys.stdout)
+    _formatter = logging.Formatter("[%(asctime)s.%(msecs)03d] %(levelname)s - %(message)s", "%Y-%m-%d %H:%M:%S")
+    _handler.setFormatter(_formatter)
+    _logger.handlers = [_handler]
+    _logger.propagate = False
+    _logger.setLevel(level=_ll)
+
 
 ll = os.environ.get('LOG_LEVEL', 'INFO').upper()
-logger.setLevel(level=ll)
-handler = logging.StreamHandler(sys.stdout)
-logger.handlers = [handler]
-formatter = logging.Formatter("[%(asctime)s.%(msecs)03d] %(levelname)s - %(message)s", "%Y-%m-%d %H:%M:%S")
-handler.setFormatter(formatter)
-logger.addHandler(handler)
+prepare_logger(logger, ll)
+prepare_logger(logging.getLogger("smart_load_balancer"), ll)
+prepare_logger(logging.getLogger("service"), ll)
 LOGGING_CONFIG["formatters"]["default"]["fmt"] = "[%(asctime)s.%(msecs)03d] %(levelname)s - %(message)s"
 LOGGING_CONFIG["formatters"]["default"]["datefmt"] = "%Y-%m-%d %H:%M:%S"
 

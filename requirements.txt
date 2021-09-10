@@ -9,9 +9,10 @@ requests==2.24.0
 starlette==0.13.6
 urllib3==1.25.11
 uvicorn==0.12.2
-parallel-wavegan==0.4.8
+parallel-wavegan==0.5.3
 
 PyYAML~=5.3.1
 SoundFile~=0.10.3.post1
 numpy~=1.19.4
 starlette_exporter==0.7.0
+git+git://github.com/airenas/smart_load_balancer.git@v0.1.26#egg=smart_load_balancer

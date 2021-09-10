@@ -1,13 +1,15 @@
 import base64
 import io
+import logging
 import os
 import time
 
 import soundfile
 import torch
 import yaml
-from fastapi.logger import logger
 from parallel_wavegan.utils import load_model
+
+logger = logging.getLogger(__name__)
 
 
 def as_string(data, sampling_rate):
@@ -39,7 +41,7 @@ class PWGANModel:
         with torch.no_grad():
             start = time.time()
 
-            x = torch.load(io.BytesIO(spectrogram_bytes),  map_location=self.device)
+            x = torch.load(io.BytesIO(spectrogram_bytes), map_location=self.device)
             y = self.vocoder.inference(x)
 
             voc_end = time.time()

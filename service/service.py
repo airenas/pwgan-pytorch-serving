@@ -3,7 +3,10 @@ import os
 
 import requests
 import urllib3
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
+from smart_load_balancer.balancer import Balancer
+from smart_load_balancer.strategy.strategy import GroupsByNameWithTimeNoSameWorker
+from smart_load_balancer.work import Work
 
 from service.config import AppConfig, Config
 from service.metrics import MetricsKeeper
@@ -19,10 +22,13 @@ def create_service():
     )
     setup_vars(app)
     setup_config(app)
+    test_models(app)
     setup_prometheus(app)
+    setup_balancer(app)
     setup_requests(app)
     setup_routes(app)
     setup_model(app)
+    app.live = True
     return app
 
 
@@ -31,6 +37,11 @@ def setup_prometheus(app):
     app.add_middleware(PrometheusMiddleware, app_name="pwgan-pytorch-serving", group_paths=True, prefix="model")
     app.metrics = MetricsKeeper()
     app.add_route("/metrics", handle_metrics)
+
+
+def setup_balancer(app):
+    app.balancer = Balancer(wrk_count=app.config.workers, strategy=GroupsByNameWithTimeNoSameWorker())
+    app.balancer.start()
 
 
 def setup_routes(app):
@@ -56,17 +67,47 @@ def setup_config(app):
     app.get_info_func = app.voices.get_info
 
 
+def test_models(app):
+    for key in app.voices.voices:
+        vc = app.voices.voices.get(key)
+        logger.info("Test model load for %s ", vc.name)
+        PWGANModel(vc.dir, vc.file, vc.device)
+        logger.info("OK - model can be loaded for %s ", vc.name)
+
+
 def setup_model(app):
-    with app.metrics.load_metric.time():
-        pwgan_model = PWGANModel(app.model_path, app.model_name, app.device)
+    def calc_model(voice, spectrogram, workers_data):
+        w_name = workers_data.get("name")
+        model = workers_data.get("model")
+        if w_name != voice:
+            if w_name:
+                logger.info("Unloading model for %s", w_name)
+            workers_data["name"] = ""
+            workers_data["model"] = None
+            logger.info("Loading model for %s ", voice)
+            vc = app.voices.get(voice)
+            if vc is None:
+                raise HTTPException(status_code=400, detail="No voice '%s'" % voice)
+            with app.metrics.load_metric.time():
+                model = PWGANModel(vc.dir, vc.file, vc.device)
+            workers_data["model"] = model
+            workers_data["name"] = voice
 
-    def calc(data, model):
         with app.metrics.calc_metric.time():
-            return pwgan_model.calculate(data)
+            return model.calculate(spectrogram)
 
-    app.calculate = calc
-    app.model_loaded = True
-    logger.info("Loaded")
+    def calculate(spectrogram, voice):
+        if not voice:
+            raise Exception("no voice")
+        work = Work(name=voice, data=spectrogram, work_func=calc_model)
+        app.balancer.add_wrk(work)
+        res = work.wait()
+        if res.err is not None:
+            raise res.err
+        return res.res
+
+    app.calculate_func = calculate
+    logger.info("Ready")
 
 
 def setup_requests(app):
