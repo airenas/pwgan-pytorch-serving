@@ -1,0 +1,8 @@
+voices:
+  - name: astra
+    dir: /home/airenas/.cache/parallel_wavegan/sabina.pwg.01-700000/
+    device: "{{device}}"
+  - name: vytautas.v01
+    dir: /home/airenas/.cache/parallel_wavegan/vytautas.pwg.01-440000/
+    file: checkpoint-440000steps.pkl
+    device: "{{device}}"

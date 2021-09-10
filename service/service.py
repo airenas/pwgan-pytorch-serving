@@ -1,23 +1,27 @@
+import logging
 import os
 
 import requests
 import urllib3
-from service.metrics import MetricsKeeper
 from fastapi import FastAPI
-from fastapi.logger import logger
 
+from service.config import AppConfig, Config
+from service.metrics import MetricsKeeper
 from service.pwgan.model import PWGANModel
+
+logger = logging.getLogger(__name__)
 
 
 def create_service():
     app = FastAPI(
         title="PWGAN Pytorch serving",
-        version="0.2",
+        version="0.3",
     )
+    setup_vars(app)
+    setup_config(app)
     setup_prometheus(app)
     setup_requests(app)
     setup_routes(app)
-    setup_vars(app)
     setup_model(app)
     return app
 
@@ -36,11 +40,20 @@ def setup_routes(app):
 
 
 def setup_vars(app):
-    logger.info("Loading model")
-    app.model_name = os.environ.get("MODEL_NAME", "checkpoint-700000steps.pkl")
-    app.model_path = os.environ.get("MODEL_PATH", "/model")
-    app.device = os.environ.get("DEVICE", "cpu")
-    app.model_loaded = False
+    app.config = AppConfig()
+    app.config.file = os.environ.get("CONFIG_FILE", "/models/config.yaml")
+    app.config.device = os.environ.get("DEVICE", "cpu")
+    app.config.device = os.environ.get("DEVICE", "cpu")
+    app.config.workers = int(os.environ.get("WORKERS", "1"))
+    if app.config.workers == 0:
+        raise Exception("No workers configured env.WORKERS")
+    app.live = False
+
+
+def setup_config(app):
+    with open(app.config.file, 'r') as data:
+        app.voices = Config(data, app.config.device)
+    app.get_info_func = app.voices.get_info
 
 
 def setup_model(app):
