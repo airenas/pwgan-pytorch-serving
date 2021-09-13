@@ -1,7 +1,7 @@
 -include Makefile.options
-MODEL_PATH?=./model
 cuda?=0
 torch?=1.7.0
+CONFIG_FILE?=sample/voices.yaml
 #####################################################################################
 service=airenas/pwgan-pytorch-serving
 version=0.2
@@ -25,8 +25,7 @@ else
 endif
 
 run:
-	CUDA_VISIBLE_DEVICES=$(cuda) MODEL_PATH=$(MODEL_PATH) MODEL_NAME=$(MODEL_NAME) \
-		DEVICE=$(DEVICE) PORT=$(PORT) python run.py
+	CUDA_VISIBLE_DEVICES=$(cuda) CONFIG_FILE=$(CONFIG_FILE) DEVICE=$(DEVICE) PORT=$(PORT) python run.py
 ########### SERVICE ################################################################
 logs:
 	mkdir -p $@
@@ -40,9 +39,8 @@ deploy/service/pwgan.service: deploy/service/pwgan.service.in
 	cat $< | envsubst > $@
 run-service:
 	. ~/miniconda3/etc/profile.d/conda.sh; conda activate pwgan-$(DEVICE); \
-		CUDA_VISIBLE_DEVICES=$(cuda) MODEL_PATH=$(MODEL_PATH) MODEL_NAME=$(MODEL_NAME) \
+		CUDA_VISIBLE_DEVICES=$(cuda) CONFIG_FILE=$(CONFIG_FILE) \
 		DEVICE=$(DEVICE) PORT=$(PORT) python run.py
-########### DOCKER ##################################################################
 ########### DOCKER ##################################################################
 tag=$(service):$(version).$(commit_count)
 dbuild: $(dist_dir)/$(executable_name)
