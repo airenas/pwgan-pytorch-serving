@@ -64,5 +64,5 @@ class PWGANModel:
         logger.info(f"RTF = {rtf:5f}")
         logger.info(f"Len = {audio_len:5f}")
 
-        with ElapsedLogger(logger, "to numpy"):
+        with ElapsedLogger(logger.info, "to numpy"):
             return y.cpu().numpy(), self.config["sampling_rate"]

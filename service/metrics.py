@@ -10,8 +10,8 @@ class MetricsKeeper:
 
 
 class ElapsedLogger(object):
-    def __init__(self, logger, msg):
-        self.logger = logger
+    def __init__(self, logger_func, msg):
+        self.logger_func = logger_func
         self.msg = msg
 
     def __enter__(self):
@@ -20,4 +20,4 @@ class ElapsedLogger(object):
     def __exit__(self, *args, **kwargs):
         end = time.time()
         elapsed = (end - self.start)
-        self.logger.info(self.msg + f": {elapsed:5f} s")
+        self.logger_func(self.msg + f": {elapsed:5f} s")
