@@ -8,6 +8,7 @@ services:
     environment:
       CONFIG_FILE: /config/voices.yaml
       DEVICE: cuda
+      WORKERS: ${WORKERS}
       NVIDIA_VISIBLE_DEVICES: all
     # restart: unless-stopped
     volumes:
