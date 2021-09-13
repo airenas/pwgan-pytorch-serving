@@ -4,8 +4,8 @@ torch?=1.7.0
 CONFIG_FILE?=sample/voices.yaml
 #####################################################################################
 service=airenas/pwgan-pytorch-serving
-version=0.2
-version-gpu=0.3
+version=0.3
+version-gpu=0.4
 commit_count=$(shell git rev-list --count HEAD)
 #####################################################################################
 test:

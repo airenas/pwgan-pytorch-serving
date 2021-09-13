@@ -1,0 +1,8 @@
+voices:
+  - name: astra
+    dir: /models/sabina.pwg.01-700000/
+    device: "{{device}}"
+  - name: vytautas.v01
+    dir: /models/vytautas.pwg.01-440000/
+    file: checkpoint-440000steps.pkl
+    device: "{{device}}"
