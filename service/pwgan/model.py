@@ -9,6 +9,8 @@ import torch
 import yaml
 from parallel_wavegan.utils import load_model
 
+from service.metrics import ElapsedLogger
+
 logger = logging.getLogger(__name__)
 
 
@@ -18,6 +20,11 @@ def as_string(data, sampling_rate):
     buffer.seek(0)
     encoded_data = base64.b64encode(buffer.read())
     return encoded_data.decode('ascii')
+
+
+def to_bytes(data):
+    base64_bytes = data.encode('ascii')
+    return base64.b64decode(base64_bytes)
 
 
 class PWGANModel:
@@ -35,14 +42,18 @@ class PWGANModel:
         logger.info("Model loaded: %s" % model_path)
 
     def calculate(self, data):
-        base64_bytes = data.encode('ascii')
-        spectrogram_bytes = base64.b64decode(base64_bytes)
+        spectrogram_bytes = to_bytes(data)
+        y, rate = self.calculate_bytes(spectrogram_bytes)
+        return as_string(y, rate)
 
+    def calculate_bytes(self, spectrogram_bytes):
         with torch.no_grad():
             start = time.time()
 
             x = torch.load(io.BytesIO(spectrogram_bytes), map_location=self.device)
             y = self.vocoder.inference(x)
+            if self.device.type != "cpu":
+                torch.cuda.synchronize()
 
             voc_end = time.time()
             elapsed = (voc_end - start)
@@ -53,4 +64,5 @@ class PWGANModel:
         logger.info(f"RTF = {rtf:5f}")
         logger.info(f"Len = {audio_len:5f}")
 
-        return as_string(y.cpu().numpy(), self.config["sampling_rate"])
+        with ElapsedLogger(logger, "to numpy"):
+            return y.cpu().numpy(), self.config["sampling_rate"]

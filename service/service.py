@@ -9,8 +9,8 @@ from smart_load_balancer.strategy.strategy import GroupsByNameWithTimeNoSameWork
 from smart_load_balancer.work import Work
 
 from service.config import AppConfig, Config
-from service.metrics import MetricsKeeper
-from service.pwgan.model import PWGANModel
+from service.metrics import MetricsKeeper, ElapsedLogger
+from service.pwgan.model import PWGANModel, to_bytes, as_string
 
 logger = logging.getLogger(__name__)
 
@@ -71,11 +71,17 @@ def test_models(app):
     for key in app.voices.voices:
         vc = app.voices.voices.get(key)
         logger.info("Test model load for %s ", vc.name)
-        PWGANModel(vc.dir, vc.file, vc.device)
+        with ElapsedLogger(logger, "load time"):
+            PWGANModel(vc.dir, vc.file, vc.device)
         logger.info("OK - model can be loaded for %s ", vc.name)
 
 
 def setup_model(app):
+    class Res:
+        def __init__(self, y, rate):
+            self.y = y
+            self.rate = rate
+
     def calc_model(voice, spectrogram, workers_data):
         w_name = workers_data.get("name")
         model = workers_data.get("model")
@@ -89,22 +95,27 @@ def setup_model(app):
             if vc is None:
                 raise HTTPException(status_code=400, detail="No voice '%s'" % voice)
             with app.metrics.load_metric.time():
-                model = PWGANModel(vc.dir, vc.file, vc.device)
+                with ElapsedLogger(logger, "load time"):
+                    model = PWGANModel(vc.dir, vc.file, vc.device)
             workers_data["model"] = model
             workers_data["name"] = voice
 
         with app.metrics.calc_metric.time():
-            return model.calculate(spectrogram)
+            y, rate = model.calculate_bytes(spectrogram)
+        return Res(y, rate)
 
     def calculate(spectrogram, voice):
         if not voice:
             raise Exception("no voice")
-        work = Work(name=voice, data=spectrogram, work_func=calc_model)
+        with ElapsedLogger(logger, "to_bytes"):
+            _bytes = to_bytes(spectrogram)
+        work = Work(name=voice, data=_bytes, work_func=calc_model)
         app.balancer.add_wrk(work)
         res = work.wait()
         if res.err is not None:
             raise res.err
-        return res.res
+        with ElapsedLogger(logger, "as_string"):
+            return as_string(res.res.y, res.res.rate)
 
     app.calculate_func = calculate
     logger.info("Ready")
