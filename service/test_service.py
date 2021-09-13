@@ -1,9 +1,22 @@
 import os
+from typing import List
 
+import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
 from service import service
+from service.api import api
+
+
+def __test_get_info() -> List[api.ModelInfo]:
+    return [api.ModelInfo(name="olia", device="cpu")]
+
+
+def __test_calc(text, model):
+    assert text == "in text"
+    assert model == "m"
+    return "olia"
 
 
 def init_test_app():
@@ -12,6 +25,8 @@ def init_test_app():
     service.setup_routes(app)
     service.setup_vars(app)
     client = TestClient(app)
+    app.get_info_func = __test_get_info
+    app.calculate_func = __test_calc
     return client, app
 
 
@@ -23,27 +38,22 @@ def test_read_main():
 
 
 def test_info():
-    os.environ["MODEL_NAME"] = "m1"
     client, app = init_test_app()
 
     response = client.get("/info")
     assert response.status_code == 200
-    assert response.json() == {'loaded': False, 'name': 'm1'}
+    assert response.json() == {'models': [{'device': 'cpu', 'name': 'olia'}], 'workers': 1}
 
-    app.model_loaded = True
+    app.config.workers = 2
     response = client.get("/info")
     assert response.status_code == 200
-    assert response.json() == {'loaded': True, 'name': 'm1'}
+    assert response.json() == {'models': [{'device': 'cpu', 'name': 'olia'}], 'workers': 2}
 
 
 def test_calculate_fail():
     client, _ = init_test_app()
-
     response = client.get("/model")
     assert response.status_code == 405
-
-    response = client.post("/model", json={"olia": "olia"})
-    assert response.status_code == 422
 
     response = client.post("/model", json={"olia": "olia"})
     assert response.status_code == 422
@@ -51,29 +61,49 @@ def test_calculate_fail():
 
 def test_calculate_fail_empty():
     client, _ = init_test_app()
-
-    response = client.post("/model", json={"data": ""})
+    response = client.post("/model", json={"data": "", "voice": "a"})
+    assert response.status_code == 400
+    response = client.post("/model", json={"data": "data", "voice": ""})
     assert response.status_code == 400
 
 
 def test_calculate():
-    client, app = init_test_app()
-
-    def test_calc(text, model):
-        assert text == "in text"
-        assert model == "m"
-        return "olia"
-
-    app.calculate = test_calc
-    response = client.post("/model", json={"data": "in text", "model": "m"})
+    client, _ = init_test_app()
+    response = client.post("/model", json={"data": "in text", "voice": "m"})
     assert response.status_code == 200
     assert response.json() == {"data": "olia", "error": None}
 
 
 def test_environment():
-    os.environ["MODEL_NAME"] = "m1"
-    os.environ["MODEL_PATH"] = "/m"
+    os.environ["CONFIG_FILE"] = "/m1/c.yaml"
+    os.environ["DEVICE"] = "cuda"
+    os.environ["WORKERS"] = "12"
     ta = FastAPI()
     service.setup_vars(ta)
-    assert ta.model_name == "m1"
-    assert ta.model_path == "/m"
+    assert ta.config.file == "/m1/c.yaml"
+    assert ta.config.device == "cuda"
+    assert ta.config.workers == 12
+
+
+def test_env_fail():
+    os.environ["WORKERS"] = "0"
+    try:
+        ta = FastAPI()
+        with pytest.raises(Exception):
+            service.setup_vars(ta)
+    finally:
+        os.environ["WORKERS"] = "1"
+
+
+def test_live():
+    client, app = init_test_app()
+
+    app.live = True
+    response = client.get("/live")
+    assert response.status_code == 200
+    assert response.json() == {'ok': True}
+
+    app.live = False
+    response = client.get("/live")
+    assert response.status_code == 200
+    assert response.json() == {'ok': False}

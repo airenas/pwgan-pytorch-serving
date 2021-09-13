@@ -9,7 +9,7 @@ version-gpu=0.3
 commit_count=$(shell git rev-list --count HEAD)
 #####################################################################################
 test:
-	pytest
+	pytest -v
 #####################################################################################
 prepare-env:
 	conda create -y -n pwgan-$(DEVICE) python=3.8.5
