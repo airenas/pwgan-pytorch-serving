@@ -94,13 +94,13 @@ def setup_model(app):
             vc = app.voices.get(voice)
             if vc is None:
                 raise HTTPException(status_code=400, detail="No voice '%s'" % voice)
-            with app.metrics.load_metric.time():
+            with app.metrics.load_metric.labels(voice).time():
                 with ElapsedLogger(logger.info, "load time"):
                     model = PWGANModel(vc.dir, vc.file, vc.device)
             workers_data["model"] = model
             workers_data["name"] = voice
 
-        with app.metrics.calc_metric.time():
+        with app.metrics.calc_metric.labels(voice).time():
             return model.calculate(spectrogram)
 
     def calculate(spectrogram, voice):

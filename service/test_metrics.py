@@ -7,10 +7,10 @@ from service.metrics import MetricsKeeper, ElapsedLogger
 
 def test_metrics():
     metrics = MetricsKeeper()
-    metrics.calc_metric.observe(1)
-    metrics.load_metric.observe(2)
-    assert REGISTRY.get_sample_value("pwgan_model_calc_seconds_sum") == 1
-    assert REGISTRY.get_sample_value("pwgan_model_load_seconds_sum") == 2
+    metrics.calc_metric.labels("test").observe(1)
+    metrics.load_metric.labels("test").observe(2)
+    assert REGISTRY.get_sample_value("pwgan_model_calc_seconds_sum", labels={"voice": "test"}) == 1
+    assert REGISTRY.get_sample_value("pwgan_model_load_seconds_sum", labels={"voice": "test"}) == 2
 
 
 def test_elapsed_logger():
