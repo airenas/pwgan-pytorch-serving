@@ -25,6 +25,7 @@ export default function (data) {
     var payload = JSON.stringify({
         data: DATA[ti],
         voice: VOICES[vi],
+        priority: getRandomInt(100)
     });
     var params = {
         headers: {

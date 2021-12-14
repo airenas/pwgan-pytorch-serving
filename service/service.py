@@ -19,7 +19,7 @@ logger = logging.getLogger(__name__)
 def create_service():
     app = FastAPI(
         title="PWGAN Pytorch serving",
-        version="0.3",
+        version="0.4",
     )
     setup_vars(app)
     setup_config(app)
@@ -111,17 +111,13 @@ def setup_model(app):
 
     def calculate(spectrogram, voice, priority: int = 0):
         with ElapsedLogger(logger.info, "calculate"):
-            logger.debug("calculate")
             if not voice:
                 raise Exception("no voice")
             work = Work(name=voice, data=spectrogram, work_func=calc_model, priority=priority)
-            logger.debug("add work calculate")
             app.balancer.add_wrk(work)
-            logger.info("wait")
             res = work.wait()
             if res.err is not None:
                 raise res.err
-            logger.debug("done calculate")
             return res.res
 
     app.calculate_func = calculate
