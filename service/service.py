@@ -1,5 +1,7 @@
 import logging
 import os
+from concurrent.futures import ThreadPoolExecutor
+
 import requests
 import urllib3
 from fastapi import FastAPI, HTTPException
@@ -47,6 +49,7 @@ def setup_routes(app):
     """Register routes."""
     from service.routers import model
     app.include_router(model.router, prefix="")
+    app.http_executor = ThreadPoolExecutor(max_workers=app.config.http_workers)
 
 
 def setup_vars(app):
@@ -55,8 +58,12 @@ def setup_vars(app):
     app.config.device = os.environ.get("DEVICE", "cpu")
     app.config.device = os.environ.get("DEVICE", "cpu")
     app.config.workers = int(os.environ.get("WORKERS", "1"))
+    app.config.http_workers = int(os.environ.get("HTTP_WORKERS", "50"))
+
     if app.config.workers == 0:
         raise Exception("No workers configured env.WORKERS")
+    if app.config.http_workers == 0:
+        raise Exception("No http workers configured env.HTTP_WORKERS")
     app.live = False
 
 
@@ -104,13 +111,17 @@ def setup_model(app):
 
     def calculate(spectrogram, voice, priority: int = 0):
         with ElapsedLogger(logger.info, "calculate"):
+            logger.debug("calculate")
             if not voice:
                 raise Exception("no voice")
             work = Work(name=voice, data=spectrogram, work_func=calc_model, priority=priority)
+            logger.debug("add work calculate")
             app.balancer.add_wrk(work)
+            logger.info("wait")
             res = work.wait()
             if res.err is not None:
                 raise res.err
+            logger.debug("done calculate")
             return res.res
 
     app.calculate_func = calculate

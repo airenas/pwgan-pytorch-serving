@@ -22,9 +22,9 @@ def __test_calc(text, model, priority):
 
 def init_test_app():
     app = FastAPI()
+    service.setup_vars(app)
     service.setup_requests(app)
     service.setup_routes(app)
-    service.setup_vars(app)
     client = TestClient(app)
     app.get_info_func = __test_get_info
     app.calculate_func = __test_calc
@@ -81,6 +81,7 @@ def test_calculate_pass_priority():
     def calc(text, model, priority):
         assert priority == 10000
         return "olia"
+
     app.calculate_func = calc
     response = client.post("/model", json={"data": "in text", "voice": "m", "priority": 10000})
     assert response.status_code == 200
@@ -91,11 +92,13 @@ def test_environment():
     os.environ["CONFIG_FILE"] = "/m1/c.yaml"
     os.environ["DEVICE"] = "cuda"
     os.environ["WORKERS"] = "12"
+    os.environ["HTTP_WORKERS"] = "20"
     ta = FastAPI()
     service.setup_vars(ta)
     assert ta.config.file == "/m1/c.yaml"
     assert ta.config.device == "cuda"
     assert ta.config.workers == 12
+    assert ta.config.http_workers == 20
 
 
 def test_env_fail():
@@ -106,6 +109,16 @@ def test_env_fail():
             service.setup_vars(ta)
     finally:
         os.environ["WORKERS"] = "1"
+
+
+def test_env_http_fail():
+    os.environ["HTTP_WORKERS"] = "0"
+    try:
+        ta = FastAPI()
+        with pytest.raises(Exception):
+            service.setup_vars(ta)
+    finally:
+        os.environ["HTTP_WORKERS"] = "20"
 
 
 def test_live():
