@@ -13,7 +13,7 @@ def calculate(data: api.Input, request: Request):
     if not data.voice:
         raise HTTPException(status_code=400, detail="No voice")
 
-    res_data = request.app.calculate_func(data.data, data.voice)
+    res_data = request.app.calculate_func(data.data, data.voice, data.priority)
     res = api.Output(data=res_data)
     return res
 

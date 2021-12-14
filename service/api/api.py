@@ -17,6 +17,7 @@ class Info(BaseModel):
 class Input(BaseModel):
     data: str
     voice: Optional[str] = None
+    priority: Optional[int] = 0
 
 
 class Output(BaseModel):

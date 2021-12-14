@@ -1,6 +1,5 @@
 import logging
 import os
-
 import requests
 import urllib3
 from fastapi import FastAPI, HTTPException
@@ -103,11 +102,11 @@ def setup_model(app):
         with app.metrics.calc_metric.labels(voice).time():
             return model.calculate(spectrogram)
 
-    def calculate(spectrogram, voice):
+    def calculate(spectrogram, voice, priority: int = 0):
         with ElapsedLogger(logger.info, "calculate"):
             if not voice:
                 raise Exception("no voice")
-            work = Work(name=voice, data=spectrogram, work_func=calc_model)
+            work = Work(name=voice, data=spectrogram, work_func=calc_model, priority=priority)
             app.balancer.add_wrk(work)
             res = work.wait()
             if res.err is not None:

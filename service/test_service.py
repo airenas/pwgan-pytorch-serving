@@ -13,9 +13,10 @@ def __test_get_info() -> List[api.ModelInfo]:
     return [api.ModelInfo(name="olia", device="cpu")]
 
 
-def __test_calc(text, model):
+def __test_calc(text, model, priority):
     assert text == "in text"
     assert model == "m"
+    assert priority == 0
     return "olia"
 
 
@@ -70,6 +71,18 @@ def test_calculate_fail_empty():
 def test_calculate():
     client, _ = init_test_app()
     response = client.post("/model", json={"data": "in text", "voice": "m"})
+    assert response.status_code == 200
+    assert response.json() == {"data": "olia", "error": None}
+
+
+def test_calculate_pass_priority():
+    client, app = init_test_app()
+
+    def calc(text, model, priority):
+        assert priority == 10000
+        return "olia"
+    app.calculate_func = calc
+    response = client.post("/model", json={"data": "in text", "voice": "m", "priority": 10000})
     assert response.status_code == 200
     assert response.json() == {"data": "olia", "error": None}
 
