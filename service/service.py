@@ -19,7 +19,7 @@ logger = logging.getLogger(__name__)
 def create_service():
     app = FastAPI(
         title="PWGAN Pytorch serving",
-        version="0.4",
+        version="0.5",
     )
     setup_vars(app)
     setup_config(app)
@@ -109,7 +109,7 @@ def setup_model(app):
         with app.metrics.calc_metric.labels(voice).time():
             return model.calculate(spectrogram)
 
-    def calculate(spectrogram, voice, priority: int = 0):
+    def calculate(spectrogram: bytes, voice: str, priority: int = 0) -> bytes:
         with ElapsedLogger(logger.info, "calculate"):
             if not voice:
                 raise Exception("no voice")

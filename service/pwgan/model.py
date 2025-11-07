@@ -22,9 +22,11 @@ def as_string(data, sampling_rate):
     return encoded_data.decode('ascii')
 
 
-def to_bytes(data):
-    base64_bytes = data.encode('ascii')
-    return base64.b64decode(base64_bytes)
+def as_waw_bytes(data: bytes, sampling_rate: int) -> bytes:
+    buffer = io.BytesIO()
+    soundfile.write(buffer, data, sampling_rate, "PCM_16", format="WAV")
+    buffer.seek(0)
+    return buffer.read()
 
 
 class PWGANModel:
@@ -41,10 +43,10 @@ class PWGANModel:
         self.vocoder = load_model(model_path).to(device).eval()
         logger.info("Model loaded: %s" % model_path)
 
-    def calculate(self, data):
-        spectrogram_bytes = to_bytes(data)
+    def calculate(self, spectrogram_bytes: bytes) -> bytes:
+        # spectrogram_bytes = to_bytes(data)
         y, rate = self.calculate_bytes(spectrogram_bytes)
-        return as_string(y, rate)
+        return as_waw_bytes(y, rate)
 
     def calculate_bytes(self, spectrogram_bytes):
         with torch.no_grad():

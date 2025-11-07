@@ -15,7 +15,7 @@ class Info(BaseModel):
 
 
 class Input(BaseModel):
-    data: str
+    data: bytes
     voice: Optional[str] = None
     priority: Optional[int] = 0
 
@@ -24,6 +24,9 @@ class Output(BaseModel):
     data: str
     error: Optional[str] = None
 
+class OutputBin(BaseModel):
+    data: bytes
+    error: Optional[str] = None
 
 class Live(BaseModel):
     ok: bool = False

@@ -16,3 +16,5 @@ SoundFile~=0.10.3.post1
 numpy~=1.19.4
 starlette_exporter==0.7.0
 git+https://github.com/airenas/smart_load_balancer.git@v0.2.37#egg=smart_load_balancer
+ msgpack==1.1.1
+
