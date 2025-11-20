@@ -12,7 +12,7 @@ test:
 	pytest -v
 #####################################################################################
 prepare-env:
-	conda create -y -n pwgan-$(DEVICE) python=3.10
+	conda create -y -n pwgan-$(DEVICE) python=3.8.5
 drop-env:
 	conda remove --name pwgan-$(DEVICE) --all
 install-req:
