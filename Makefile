@@ -16,7 +16,7 @@ prepare-env:
 drop-env:
 	conda remove --name pwgan-$(DEVICE) --all
 install-req:
-    pip install "pip<24.1"
+	pip install "pip<24.1"
 ifeq ($(DEVICE),cpu)
 	pip install torch==$(torch)+cpu -f https://download.pytorch.org/whl/torch_stable.html
 	pip install -r requirements.txt
