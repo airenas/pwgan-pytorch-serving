@@ -1,7 +1,13 @@
 voices:
-  - name: astra
-    dir: /home/airenas/.cache/parallel_wavegan/sabina.pwg.01-700000/
+  - name: vytautas.v06b
+    dir: /home/airenas/projects/pwgan-pytorch-serving/.models/pwgan/vytautas.style.v06b-1000000
     device: "{{device}}"
-  - name: vytautas.v01
-    dir: /home/airenas/.cache/parallel_wavegan/vytautas.pwg.v02-3000000/
+  - name: laimis.v02a1
+    dir: /home/airenas/projects/pwgan-pytorch-serving/.models/pwgan/laimis.style.v01-2000000
+    device: "{{device}}"
+  - name: lina.v04b
+    dir: /home/airenas/projects/pwgan-pytorch-serving/.models/pwgan/lina.style.v04b-1000000
+    device: "{{device}}"
+  - name: astra.v04
+    dir: /home/airenas/projects/pwgan-pytorch-serving/.models/pwgan/sabina.style.v04-1000000
     device: "{{device}}"
